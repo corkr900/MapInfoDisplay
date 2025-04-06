@@ -45,7 +45,7 @@ public class MapInfoDisplayModule : EverestModule {
 		ButtonExt btn = new ButtonExt(Dialog.Clean("corkr900_MapInfoDisplay_OpenInstructions"));
 		btn.Pressed(() => {
 			// open the instructions file
-			string url = "https://google.com/";  // TODO
+			string url = "https://github.com/corkr900/MapInfoDisplay/wiki/Map-Info-Display";
 			if (!OpenUrl(url)) {
 				SetSubtext(btn, menu, "Head2Head_SettingsManager_CantOpenURLs");
 			}

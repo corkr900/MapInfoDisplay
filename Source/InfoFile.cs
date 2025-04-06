@@ -161,6 +161,10 @@ namespace Celeste.Mod.MapInfoDisplay {
 		private static string GetDefaultCss() {
 			return "body {\n"
 				+ "  font-family: sans-serif;\n"
+				+ "  background-color: rgba(0, 0, 0, 0);\n"
+				+ "  margin: 0px auto;\n"
+				+ "  overflow: hidden;\n"
+				+ "  font-size: 2em;\n"
 				+ "}\n\n"
 				+ "/* You can add your own CSS stlyes here! */\n";
 		}
