@@ -1,0 +1,6 @@
+- Name: MapInfoDisplay
+  Version: 0.0.1
+  DLL: bin/MapInfoDisplay.dll
+  Dependencies:
+    - Name: EverestCore
+      Version: 1.5421.0
