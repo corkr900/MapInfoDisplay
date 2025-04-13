@@ -1,4 +1,5 @@
 ﻿using FMOD.Studio;
+using MonoMod.ModInterop;
 using System;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
@@ -32,6 +33,7 @@ public class MapInfoDisplayModule : EverestModule {
     public override void Load() {
 		On.Celeste.LevelLoader.StartLevel += OnLevelLoaderStart;
 		Everest.Events.Level.OnExit += onLevelExit;
+		typeof(CollabUtils2_LobbyHelper).ModInterop();
 	}
 
     public override void Unload() {
@@ -62,7 +64,7 @@ public class MapInfoDisplayModule : EverestModule {
 			return true;
 		}
 		catch {
-			// hack because of this: https://github.com/dotnet/corefx/issues/10361
+			// This is a hack because of https://github.com/dotnet/corefx/issues/10361
 			if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows)) {
 				url = url.Replace("&", "^&");
 				Process.Start(new ProcessStartInfo() { FileName = url, UseShellExecute = true });

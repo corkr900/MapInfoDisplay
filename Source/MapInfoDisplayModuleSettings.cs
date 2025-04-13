@@ -38,7 +38,6 @@ namespace Celeste.Mod.MapInfoDisplay
 			}
 		}
 
-		[SettingIgnore]  // TODO handle collab lobbies better
 		[SettingName("corkr900_MapInfoDisplay_Setting_IncludeLobby")]
 		public bool IncludeLobby {
 			get => _includeLobby;

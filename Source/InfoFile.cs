@@ -51,12 +51,12 @@ namespace Celeste.Mod.MapInfoDisplay {
 			AreaData areaData = AreaData.Get(area);
 
 			string mapname = GetMapDisplayName(area, areaData);
-			string modname = GetModDisplayName(area);
+			string modname = GetModDisplayName(areaData);
 			string lobbyname = GetLobbyDisplayName(areaData);
 			string creator = GetCreator(areaData);
 
 			bool includeMod = IncludeMod(area, mapname, modname);
-			bool includeLobby = IncludeLobby(area, lobbyname);
+			bool includeLobby = IncludeLobby(area, modname, mapname, lobbyname);
 			bool includeCreator = IncludeCreator(area, creator);
 
 			string template = "corkr900_MapInfoDisplay_Map";
@@ -64,21 +64,32 @@ namespace Celeste.Mod.MapInfoDisplay {
 			if (includeLobby) template += "_Lobby";
 			if (includeCreator) template += "_Creator";
 
-			string result = "";
-			if (UseMultiline()) {
-				mapname += "\n";
-				if (!string.IsNullOrEmpty(modname)) modname += "\n";
-				if (!string.IsNullOrEmpty(lobbyname)) lobbyname += "\n";
-				result = string.Format(Dialog.Get(template), mapname, modname, lobbyname, creator);
-				result = result.Replace("\n ", "\n");
-			}
-			else result = string.Format(Dialog.Get(template), mapname, modname, lobbyname, creator);
+			string result = string.Format(Dialog.Get(template), mapname, modname, lobbyname, creator)
+				.Replace("<n>", UseMultiline() ? "\n" : " ");
 			return result;
 		}
 
-		private static bool IncludeLobby(AreaKey area, string lobbyname) {
-			return (MapInfoDisplayModule.Settings?.IncludeMod ?? true)
-				&& false;  // TODO - check whether there is a lobby with translation
+		private static bool IncludeLobby(AreaKey area, string modname, string mapname, string lobbyname) {
+			bool mainCheck = (MapInfoDisplayModule.Settings?.IncludeMod ?? true)
+				&& !string.IsNullOrEmpty(lobbyname)
+				&& lobbyname.ToUpperInvariant() != mapname.ToUpperInvariant()
+				&& lobbyname.ToUpperInvariant() != modname.ToUpperInvariant();
+			if (!mainCheck) return false;
+			// Don't show lobby name in single-lobby collabs.
+			// To check, get the levels registered immediately before and immediately after the lobby.
+			// If neither of them have the same level set as the lobby, it's a single-lobby collab
+			string lobbySID = Collab.GetLobbyForMap(area.SID);
+			AreaData lobbyData = AreaData.Get(lobbySID);
+			if (lobbyData == null) return false;
+			AreaData previous = AreaData.Get(lobbyData.ID - 1);
+			AreaData next = AreaData.Get(lobbyData.ID + 1);
+			bool previousIsPrologue =
+				previous == null ? false
+				: (previous.SID?.Split("/")?.Last()?.StartsWith("0-") ?? false);
+			bool isSingleLobbyCollab =
+				(previous?.LevelSet != lobbyData.LevelSet || previousIsPrologue)
+				&& next?.LevelSet != lobbyData.LevelSet;
+			return !isSingleLobbyCollab;
 		}
 
 		public static bool UseMultiline() {
@@ -87,6 +98,7 @@ namespace Celeste.Mod.MapInfoDisplay {
 
 		public static bool IncludeMod(AreaKey area, string mapname, string modname) {
 			return (MapInfoDisplayModule.Settings?.IncludeMod ?? true)
+				&& !string.IsNullOrEmpty(modname)
 				&& area.LevelSet != VANILLA_LEVEL_SET
 				&& mapname.ToUpperInvariant() != modname.ToUpperInvariant();
 		}
@@ -97,15 +109,30 @@ namespace Celeste.Mod.MapInfoDisplay {
 				&& area.LevelSet != VANILLA_LEVEL_SET;
 	}
 
-		private static string GetModDisplayName(AreaKey area) {
+		private static string GetModDisplayName(AreaData area) {
 			// TODO handle randomizer
-			// TODO
-			return Dialog.CleanLevelSet(area.LevelSet);
+			// Try to get the level set name
+			if (TryGetDialog(out string setName, area.LevelSet)) return setName;
+			// Safeguard against infinite recursion (probably impossible, but be safe)
+			if (Collab.IsCollabLobby(area.SID)) return Collab.GetCollabNameForSID(area.SID);
+			// Try to get the collab level's lobby's mod name - i.e. the lobby's level set name
+			string lobbySID = Collab.IsCollabGym(area.SID)
+				? Collab.GetLobbyForGym(area.SID)
+				: Collab.GetLobbyForMap(area.SID);
+			if (string.IsNullOrEmpty(lobbySID)) return "";
+			if (lobbySID == area.SID) return Collab.GetCollabNameForSID(area.SID);
+			AreaData lobbyData = AreaData.Get(lobbySID);
+			if (lobbyData == null) return "";
+			return GetModDisplayName(lobbyData);
 		}
 
 		private static string GetLobbyDisplayName(AreaData area) {
-			// TODO
-			return "PLACEHOLDER - Lobby";
+			string lobbySID = Collab.GetLobbyForMap(area.SID);
+			if (string.IsNullOrEmpty(lobbySID)) return "";
+			AreaData lobbyData = AreaData.Get(lobbySID);
+			return lobbyData == null ? ""
+				: TryGetDialog(out string lobbyDispName, lobbyData.Name) ? lobbyDispName
+				: "";
 		}
 
 		private static string GetMapDisplayName(AreaKey area, AreaData data) {
@@ -129,14 +156,23 @@ namespace Celeste.Mod.MapInfoDisplay {
 		}
 
 		private static string GetCreator(AreaData areaData) {
-			string key = areaData.Name.DialogKeyify() + "_author";
-			string check = Dialog.Get(key);
-			if (check == $"[{key}]") return "";
+			if (!TryGetDialog(out string check, areaData.Name, suffix: "_author")) return "";
 			string[] trimIf = Dialog.Get("corkr900_MapInfoDisplay_TrimFromCreator").Split('^');
 			bool useBy = !trimIf.Any(check.StartsWith);
 			return useBy
 				? string.Format(Dialog.Get("corkr900_MapInfoDisplay_ByCreator"), check)
 				: check;
+		}
+
+		private static bool TryGetDialog(out string result, string unformattedKey, string prefix = "", string suffix = "") {
+			string key = prefix + unformattedKey.DialogKeyify() + suffix;
+			string check = Dialog.Get(key);
+			if (check == $"[{key}]") {
+				result = "";
+				return false;
+			}
+			result = check;
+			return true;
 		}
 
 		private static string MakeHtmlDocument(string text) {

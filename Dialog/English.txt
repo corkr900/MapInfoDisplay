@@ -1,18 +1,34 @@
+# Mod name
 MapInfoDisplay= Map Info Display
 
+# If you are editing or translating this:
+# {0} is the map name
+# {1} is the mod name
+	# If it's not a collab map, this is the name of the level set that the level is in
+	# If it's a collab map and the collab provides a translation for the lobby-specific level set, this is the name of that level set
+	# If it's a collab map and the collab does not provide a translation for the lobby-specific level set, this is the name of the whole collab
+# {2} is the lobby name
+# {3} is the creator name
+	# This is obtained from the key <key for map name>_author. This is typically only present in collab maps, but if other maps have it, it will be used.
+# <n> is replaced with either a new line or a space depending on whether the setting is enabled
 corkr900_MapInfoDisplay_Map= {0}
-corkr900_MapInfoDisplay_Map_Creator= {0} {3}
+corkr900_MapInfoDisplay_Map_Creator= {0}<n>{3}
 corkr900_MapInfoDisplay_Map_Lobby= {0} ({2})
-corkr900_MapInfoDisplay_Map_Lobby_Creator= {0} ({2}) {3}
-corkr900_MapInfoDisplay_Map_Mod= {0} from {1}
-corkr900_MapInfoDisplay_Map_Mod_Creator= {0} from {1} {3}
-corkr900_MapInfoDisplay_Map_Mod_Lobby= {0} from {1} ({2})
-corkr900_MapInfoDisplay_Map_Mod_Lobby_Creator= {0} from {1} ({2}) {3}
+corkr900_MapInfoDisplay_Map_Lobby_Creator= {0} ({2})<n>{3}
+corkr900_MapInfoDisplay_Map_Mod= {0}<n>from {1}
+corkr900_MapInfoDisplay_Map_Mod_Creator= {0}<n>from {1}<n>{3}
+corkr900_MapInfoDisplay_Map_Mod_Lobby= {0}<n>from {1} ({2})
+corkr900_MapInfoDisplay_Map_Mod_Lobby_Creator= {0}<n>from {1} ({2})<n>{3}
 
+# This formats the author name IF one of the trim strings is not found in the creator name
 corkr900_MapInfoDisplay_ByCreator= by {0}
 
+# These are all the strings that will cause the author name to skip the formatting of the previous line.
+# Thisa llows for the author name to be displayed as-is if it starts with any of these strings.
+# Values are separated by the ^ character.
 corkr900_MapInfoDisplay_TrimFromCreator= by^from
 
+# Settings
 corkr900_MapInfoDisplay_Setting_UseMultiline= Use Multiple Lines
 corkr900_MapInfoDisplay_Setting_IncludeMod= Include Mod Name
 corkr900_MapInfoDisplay_Setting_IncludeLobby= Include Collab Lobby
